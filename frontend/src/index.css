@@ -1,0 +1,101 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    border-color: theme('colors.ink.200');
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background-color: theme('colors.sand');
+    background-image:
+      radial-gradient(circle at 8% 0%, rgb(20 184 166 / 0.07), transparent 28rem),
+      radial-gradient(circle at 92% 6%, rgb(56 189 248 / 0.07), transparent 30rem);
+    background-attachment: fixed;
+    color: theme('colors.ink.900');
+    font-family: theme('fontFamily.sans');
+  }
+
+  .dark body {
+    background: theme('colors.ink.950');
+    color: theme('colors.ink.100');
+  }
+
+  ::selection {
+    background: theme('colors.brand.200');
+    color: theme('colors.brand.950');
+  }
+
+  :focus-visible {
+    outline: 2px solid theme('colors.brand.500');
+    outline-offset: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: padding-box;
+    background-color: theme('colors.ink.300');
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: theme('colors.ink.700');
+  }
+}
+
+@layer components {
+  .table-shell {
+    @apply overflow-hidden rounded-xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900;
+  }
+
+  .data-table {
+    @apply w-full border-collapse text-left text-sm;
+  }
+
+  .data-table th {
+    @apply border-b border-ink-200 bg-ink-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-500 dark:border-ink-800 dark:bg-ink-950/40 dark:text-ink-400;
+  }
+
+  .data-table td {
+    @apply border-b border-ink-100 px-4 py-3.5 align-middle text-ink-700 dark:border-ink-800 dark:text-ink-200;
+  }
+
+  .data-table tbody tr {
+    @apply transition hover:bg-ink-50 dark:hover:bg-ink-800/60;
+  }
+
+  .subtle-grid {
+    background-image: linear-gradient(to right, rgb(148 163 184 / .09) 1px, transparent 1px), linear-gradient(to bottom, rgb(148 163 184 / .09) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+
+  .app-canvas {
+    background-color: theme('colors.sand');
+    background-image:
+      radial-gradient(circle at 15% 0%, rgb(20 184 166 / 0.06), transparent 26rem),
+      radial-gradient(circle at 90% 5%, rgb(56 189 248 / 0.06), transparent 28rem);
+  }
+
+  .enterprise-gradient {
+    background-image: linear-gradient(135deg, rgb(239 252 251) 0%, rgb(255 255 255) 50%, rgb(240 249 255) 100%);
+  }
+}

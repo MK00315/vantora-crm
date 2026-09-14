@@ -1,0 +1,43 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:mtcrm;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_LOWER=TRUE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    enabled: false
+  cache:
+    type: none
+  task:
+    scheduling:
+      enabled: false
+app:
+  jwt:
+    secret: test-only-secret-with-at-least-thirty-two-characters-0123456789
+    issuer: mt-crm-test
+    access-ttl: 15m
+    refresh-ttl: 30d
+    action-ttl: 30m
+  cookie:
+    secure: false
+    same-site: Lax
+    domain: ""
+  cors:
+    allowed-origins: ["http://localhost:5173"]
+  mail:
+    enabled: false
+    from: test@localhost
+  storage:
+    provider: local
+    local-path: ./target/test-uploads
+    public-base-url: http://localhost:8080
+    s3:
+      bucket: ""
+      region: ap-south-1
+      endpoint: ""
+  demo:
+    enabled: false
+    password: ""

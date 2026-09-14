@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: mt-crm-api
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/mtcrm}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:15}
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+        order_inserts: true
+        order_updates: true
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      timeout: 2s
+      repositories:
+        enabled: false
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: ${MAIL_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_STARTTLS:false}
+      mail.smtp.connectiontimeout: ${MAIL_CONNECTION_TIMEOUT_MS:5000}
+      mail.smtp.timeout: ${MAIL_READ_TIMEOUT_MS:10000}
+      mail.smtp.writetimeout: ${MAIL_WRITE_TIMEOUT_MS:10000}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never
+    include-stacktrace: never
+  # Trust proxy headers only when the deployment explicitly enables it behind a trusted reverse proxy.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:none}
+
+app:
+  frontend-base-url: ${APP_FRONTEND_BASE_URL:http://localhost:5173}
+  jwt:
+    secret: ${JWT_SECRET}
+    issuer: ${JWT_ISSUER:mt-crm-api}
+    access-ttl: ${JWT_ACCESS_TOKEN_TTL:${JWT_ACCESS_TTL:15m}}
+    refresh-ttl: ${JWT_REFRESH_TOKEN_TTL:${JWT_REFRESH_TTL:7d}}
+    action-ttl: ${JWT_ACTION_TOKEN_TTL:${JWT_ACTION_TTL:30m}}
+  cookie:
+    secure: ${COOKIE_SECURE:false}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+    domain: ${COOKIE_DOMAIN:}
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:no-reply@vantora.local}
+  storage:
+    provider: ${STORAGE_PROVIDER:local}
+    local-path: ${STORAGE_LOCAL_PATH:./data/uploads}
+    public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+    max-bytes-per-tenant: ${STORAGE_MAX_BYTES_PER_TENANT:104857600}
+    max-files-per-tenant: ${STORAGE_MAX_FILES_PER_TENANT:1000}
+    max-uploads-per-hour: ${STORAGE_MAX_UPLOADS_PER_HOUR:60}
+    max-bytes-total: ${STORAGE_MAX_BYTES_TOTAL:1073741824}
+    max-files-total: ${STORAGE_MAX_FILES_TOTAL:10000}
+    max-uploads-per-hour-total: ${STORAGE_MAX_UPLOADS_PER_HOUR_TOTAL:1000}
+    max-concurrent-uploads: ${STORAGE_MAX_CONCURRENT_UPLOADS:4}
+    reservation-ttl: ${STORAGE_RESERVATION_TTL:1h}
+    cleanup-cron: ${STORAGE_CLEANUP_CRON:0 */15 * * * *}
+    s3:
+      bucket: ${AWS_S3_BUCKET:}
+      region: ${AWS_REGION:ap-south-1}
+      endpoint: ${AWS_S3_ENDPOINT:}
+  security:
+    auth-rate-limit: ${AUTH_RATE_LIMIT:20}
+    auth-rate-window-seconds: ${AUTH_RATE_WINDOW_SECONDS:60}
+    mutation-rate-limit-per-user: ${MUTATION_RATE_LIMIT_PER_USER:300}
+    mutation-rate-limit-per-tenant: ${MUTATION_RATE_LIMIT_PER_TENANT:2000}
+    mutation-rate-window-seconds: ${MUTATION_RATE_WINDOW_SECONDS:60}
+    token-retention: ${TOKEN_RETENTION:7d}
+    token-cleanup-cron: ${TOKEN_CLEANUP_CRON:0 30 2 * * *}
+    pending-registration-retention: ${PENDING_REGISTRATION_RETENTION:24h}
+  reminders:
+    cron: ${REMINDER_CRON:0 0 * * * *}
+  quotas:
+    max-tenants: ${MAX_TENANTS:10000}
+    max-users-per-tenant: ${MAX_USERS_PER_TENANT:250}
+    max-customers-per-tenant: ${MAX_CUSTOMERS_PER_TENANT:100000}
+    max-leads-per-tenant: ${MAX_LEADS_PER_TENANT:100000}
+    max-tasks-per-tenant: ${MAX_TASKS_PER_TENANT:250000}
+    max-activities-per-tenant: ${MAX_ACTIVITIES_PER_TENANT:1000000}
+    max-pending-registrations: ${MAX_PENDING_REGISTRATIONS:5000}
+  demo:
+    enabled: false
+    password: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+  health:
+    mail:
+      enabled: false
+    redis:
+      enabled: false
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+
+logging:
+  pattern:
+    level: "%5p [traceId=%X{traceId:-}]"
+  level:
+    com.mtcrm: INFO

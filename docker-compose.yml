@@ -1,0 +1,165 @@
+name: ${COMPOSE_PROJECT_NAME:-mtcrm}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mtcrm}
+      POSTGRES_USER: ${POSTGRES_USER:-mtcrm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mtcrm_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - mtcrm
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - mtcrm
+
+  mailpit:
+    image: axllent/mailpit:v1.30.7
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_DATABASE: /data/mailpit.db
+    ports:
+      - "127.0.0.1:${MAILPIT_PORT:-8025}:8025"
+    volumes:
+      - mailpit_data:/data
+    networks:
+      - mtcrm
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-mtcrm}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-mtcrm}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-mtcrm_dev_password}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-15}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      JWT_SECRET: ${JWT_SECRET:?Run scripts/init-env.ps1 or set a strong JWT_SECRET before starting}
+      JWT_ISSUER: ${JWT_ISSUER:-mt-crm-api}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL:-15m}
+      JWT_REFRESH_TOKEN_TTL: ${JWT_REFRESH_TOKEN_TTL:-7d}
+      JWT_ACTION_TOKEN_TTL: ${JWT_ACTION_TOKEN_TTL:-30m}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAME_SITE: ${COOKIE_SAME_SITE:-Lax}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      APP_FRONTEND_BASE_URL: ${APP_FRONTEND_BASE_URL:-http://localhost:3000}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:3000}
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@vantora.local}
+      MAIL_AUTH: ${MAIL_AUTH:-false}
+      MAIL_STARTTLS: ${MAIL_STARTTLS:-false}
+      MAIL_CONNECTION_TIMEOUT_MS: ${MAIL_CONNECTION_TIMEOUT_MS:-5000}
+      MAIL_READ_TIMEOUT_MS: ${MAIL_READ_TIMEOUT_MS:-10000}
+      MAIL_WRITE_TIMEOUT_MS: ${MAIL_WRITE_TIMEOUT_MS:-10000}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_LOCAL_PATH: /app/data/uploads
+      STORAGE_MAX_BYTES_PER_TENANT: ${STORAGE_MAX_BYTES_PER_TENANT:-104857600}
+      STORAGE_MAX_FILES_PER_TENANT: ${STORAGE_MAX_FILES_PER_TENANT:-1000}
+      STORAGE_MAX_UPLOADS_PER_HOUR: ${STORAGE_MAX_UPLOADS_PER_HOUR:-60}
+      STORAGE_MAX_BYTES_TOTAL: ${STORAGE_MAX_BYTES_TOTAL:-1073741824}
+      STORAGE_MAX_FILES_TOTAL: ${STORAGE_MAX_FILES_TOTAL:-10000}
+      STORAGE_MAX_UPLOADS_PER_HOUR_TOTAL: ${STORAGE_MAX_UPLOADS_PER_HOUR_TOTAL:-1000}
+      STORAGE_MAX_CONCURRENT_UPLOADS: ${STORAGE_MAX_CONCURRENT_UPLOADS:-4}
+      STORAGE_RESERVATION_TTL: ${STORAGE_RESERVATION_TTL:-1h}
+      STORAGE_CLEANUP_CRON: ${STORAGE_CLEANUP_CRON:-0 */15 * * * *}
+      AWS_REGION: ${AWS_REGION:-ap-south-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_S3_ENDPOINT: ${AWS_S3_ENDPOINT:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AUTH_RATE_LIMIT: ${AUTH_RATE_LIMIT:-20}
+      AUTH_RATE_WINDOW_SECONDS: ${AUTH_RATE_WINDOW_SECONDS:-60}
+      MUTATION_RATE_LIMIT_PER_USER: ${MUTATION_RATE_LIMIT_PER_USER:-300}
+      MUTATION_RATE_LIMIT_PER_TENANT: ${MUTATION_RATE_LIMIT_PER_TENANT:-2000}
+      MUTATION_RATE_WINDOW_SECONDS: ${MUTATION_RATE_WINDOW_SECONDS:-60}
+      TOKEN_RETENTION: ${TOKEN_RETENTION:-7d}
+      TOKEN_CLEANUP_CRON: ${TOKEN_CLEANUP_CRON:-0 30 2 * * *}
+      PENDING_REGISTRATION_RETENTION: ${PENDING_REGISTRATION_RETENTION:-24h}
+      MAX_TENANTS: ${MAX_TENANTS:-10000}
+      MAX_PENDING_REGISTRATIONS: ${MAX_PENDING_REGISTRATIONS:-5000}
+      MAX_USERS_PER_TENANT: ${MAX_USERS_PER_TENANT:-250}
+      MAX_CUSTOMERS_PER_TENANT: ${MAX_CUSTOMERS_PER_TENANT:-100000}
+      MAX_LEADS_PER_TENANT: ${MAX_LEADS_PER_TENANT:-100000}
+      MAX_TASKS_PER_TENANT: ${MAX_TASKS_PER_TENANT:-250000}
+      MAX_ACTIVITIES_PER_TENANT: ${MAX_ACTIVITIES_PER_TENANT:-1000000}
+      REMINDER_CRON: ${REMINDER_CRON:-0 0 * * * *}
+    expose:
+      - "8080"
+    volumes:
+      - uploaded_files:/app/data/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mailpit:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - mtcrm
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    networks:
+      - mtcrm
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploaded_files:
+  mailpit_data:
+
+networks:
+  mtcrm:
+    driver: bridge

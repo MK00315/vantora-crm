@@ -1,0 +1,880 @@
+{
+  "info": {
+    "_postman_id": "9e783f19-08ed-4bd1-bd53-59d70e7eab9e",
+    "name": "Vantora CRM API",
+    "description": "Runnable examples for the Enterprise Multi-Tenant CRM API through the local Nginx endpoint. Select the supplied Local environment. Registration returns 201 without a session: copy the token from the Mailpit message at http://localhost:8025 into verificationToken, run Verify email, and then run Login. Login and refresh save the access token; Postman's cookie jar manages the HttpOnly refresh token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "exec": [
+          "if (pm.info.requestName === 'Register workspace') {",
+          "  const runId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;",
+          "  pm.environment.set('adminEmail', `admin+${runId}@vantora.local`);",
+          "  pm.environment.set('invitedEmail', `isha+${runId}@vantora.local`);",
+          "  pm.environment.unset('accessToken');",
+          "  pm.environment.unset('verificationToken');",
+          "}"
+        ],
+        "type": "text/javascript"
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Run Register, copy the verification token from Mailpit into the environment, run Verify email, then run Login. Refresh and logout use the `mtcrm_refresh` cookie saved automatically by Postman.",
+      "item": [
+        {
+          "name": "Register workspace",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Workspace was registered', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body).to.have.property('message');",
+                  "pm.expect(body).not.to.have.property('accessToken');",
+                  "pm.expect(pm.response.headers.has('Set-Cookie')).to.equal(false);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Vantora Demo\",\n  \"firstName\": \"Maya\",\n  \"lastName\": \"Rao\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"Vantora123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Resend verification",
+          "description": "Use this only when the original verification token expired. The response is generic. Open {{mailpitUrl}}, then copy the token query parameter from the newest verification link into verificationToken.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Generic resend response returned', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json()).to.have.property('message');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-verification",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resend-verification"]
+            }
+          }
+        },
+        {
+          "name": "Verify email",
+          "description": "Set verificationToken to the token query parameter from the Mailpit verification link before sending this request.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Email was verified', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json()).to.have.property('message');",
+                  "pm.environment.unset('verificationToken');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login succeeded', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('accessToken', body.accessToken);",
+                  "pm.environment.set('userId', body.user.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"Vantora123!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Current session",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Refresh session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session was refreshed', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('accessToken', body.accessToken);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "Request password reset",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{adminEmail}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leads",
+      "item": [
+        {
+          "name": "List leads",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads?q=&stage=NEW&page=0&size=20&sort=createdAt&direction=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"],
+              "query": [
+                { "key": "q", "value": "" },
+                { "key": "stage", "value": "NEW" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sort", "value": "createdAt" },
+                { "key": "direction", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create lead",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Lead was created', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('leadId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aarav\",\n  \"lastName\": \"Shah\",\n  \"email\": \"aarav@example.com\",\n  \"phone\": \"+91 98765 43210\",\n  \"company\": \"Orbit Labs\",\n  \"title\": \"Engineering Director\",\n  \"source\": \"Referral\",\n  \"stage\": \"NEW\",\n  \"estimatedValue\": 125000,\n  \"ownerId\": \"{{userId}}\",\n  \"notes\": \"Interested in a multi-team rollout.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads"]
+            }
+          }
+        },
+        {
+          "name": "Get lead",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update lead",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aarav\",\n  \"lastName\": \"Shah\",\n  \"email\": \"aarav@example.com\",\n  \"phone\": \"+91 98765 43210\",\n  \"company\": \"Orbit Labs\",\n  \"title\": \"Engineering Director\",\n  \"source\": \"Referral\",\n  \"stage\": \"CONTACTED\",\n  \"estimatedValue\": 150000,\n  \"ownerId\": \"{{userId}}\",\n  \"notes\": \"Discovery call completed.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            }
+          }
+        },
+        {
+          "name": "Move lead stage",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stage\": \"QUALIFIED\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}/stage",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}", "stage"]
+            }
+          }
+        },
+        {
+          "name": "Delete lead",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/leads/{{leadId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["leads", "{{leadId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "item": [
+        {
+          "name": "List customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers?q=&status=ACTIVE&page=0&size=20&sort=createdAt&direction=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"],
+              "query": [
+                { "key": "q", "value": "" },
+                { "key": "status", "value": "ACTIVE" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sort", "value": "createdAt" },
+                { "key": "direction", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Customer was created', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('customerId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nila Kapoor\",\n  \"email\": \"nila@example.com\",\n  \"phone\": \"+91 99887 76655\",\n  \"company\": \"Helio Systems\",\n  \"website\": \"https://example.com\",\n  \"status\": \"ACTIVE\",\n  \"notes\": \"Quarterly account review.\",\n  \"ownerId\": \"{{userId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers"]
+            }
+          }
+        },
+        {
+          "name": "Get customer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Nila Kapoor\",\n  \"email\": \"nila@example.com\",\n  \"phone\": \"+91 99887 76655\",\n  \"company\": \"Helio Systems\",\n  \"website\": \"https://example.com\",\n  \"status\": \"ACTIVE\",\n  \"notes\": \"Expansion opportunity identified.\",\n  \"ownerId\": \"{{userId}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Export customers CSV",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "export"]
+            }
+          }
+        },
+        {
+          "name": "Delete customer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/customers/{{customerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["customers", "{{customerId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "item": [
+        {
+          "name": "List tasks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks?q=&status=TODO&priority=HIGH&page=0&size=20&sort=dueAt&direction=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"],
+              "query": [
+                { "key": "q", "value": "" },
+                { "key": "status", "value": "TODO" },
+                { "key": "priority", "value": "HIGH" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sort", "value": "dueAt" },
+                { "key": "direction", "value": "asc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Task was created', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('taskId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prepare discovery call\",\n  \"description\": \"Review the requirements and prepare questions.\",\n  \"status\": \"TODO\",\n  \"priority\": \"HIGH\",\n  \"dueAt\": \"2027-01-15T10:30:00Z\",\n  \"assigneeId\": \"{{userId}}\",\n  \"leadId\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks"]
+            }
+          }
+        },
+        {
+          "name": "Get task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Prepare discovery call\",\n  \"description\": \"Requirements reviewed; share agenda.\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"URGENT\",\n  \"dueAt\": \"2027-01-15T10:30:00Z\",\n  \"assigneeId\": \"{{userId}}\",\n  \"leadId\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        },
+        {
+          "name": "Complete task",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Delete task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["tasks", "{{taskId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Workspace overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Dashboard returned metrics', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.expect(body).to.have.property('pipeline');",
+                  "pm.expect(body).to.have.property('upcomingTasks');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Team",
+      "item": [
+        {
+          "name": "List team members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users?q=&page=0&size=20&sort=createdAt&direction=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"],
+              "query": [
+                { "key": "q", "value": "" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" },
+                { "key": "sort", "value": "createdAt" },
+                { "key": "direction", "value": "desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update my profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Maya\",\n  \"lastName\": \"Rao\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Invite team member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Team member was invited', () => pm.response.to.have.status(201));",
+                  "pm.environment.set('invitedUserId', pm.response.json().id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Isha\",\n  \"lastName\": \"Menon\",\n  \"email\": \"{{invitedEmail}}\",\n  \"role\": \"RECRUITER\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["users"]
+            }
+          }
+        },
+        {
+          "name": "Update team member",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Isha\",\n  \"lastName\": \"Menon\",\n  \"role\": \"HR\",\n  \"status\": \"INVITED\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/users/{{invitedUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{invitedUserId}}"]
+            }
+          }
+        },
+        {
+          "name": "Suspend team member",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Team member was suspended', () => pm.response.to.have.status(204));",
+                  "pm.environment.unset('invitedUserId');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{invitedUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "{{invitedUserId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files",
+      "description": "The example uses a small inline CSV, so it also works in a collection run without selecting a local file.",
+      "item": [
+        {
+          "name": "Upload file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('File was uploaded', () => pm.response.to.have.status(201));",
+                  "const body = pm.response.json();",
+                  "pm.environment.set('fileKey', body.key);",
+                  "pm.environment.set('fileUrl', body.url);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data; boundary=vantora-boundary"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "--vantora-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"sample-contacts.csv\"\r\nContent-Type: text/csv\r\n\r\nname,email\r\nSample Contact,sample@example.com\r\n--vantora-boundary--\r\n"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["files"]
+            }
+          }
+        },
+        {
+          "name": "Read uploaded file",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{fileUrl}}",
+              "host": ["{{fileUrl}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete uploaded file",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('File was deleted', () => pm.response.to.have.status(200));",
+                  "pm.environment.unset('fileKey');",
+                  "pm.environment.unset('fileUrl');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/files?key={{fileKey}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["files"],
+              "query": [
+                { "key": "key", "value": "{{fileKey}}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Activity",
+      "item": [
+        {
+          "name": "Recent activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/activities?page=0&size=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["activities"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "20" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Session cleanup",
+      "description": "Run after the protected examples. This revokes the refresh session and removes the saved access token.",
+      "item": [
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session was closed', () => pm.response.to.have.status(200));",
+                  "pm.environment.unset('accessToken');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1", "type": "string" },
+    { "key": "mailpitUrl", "value": "http://localhost:8025", "type": "string" },
+    { "key": "verificationToken", "value": "", "type": "string" },
+    { "key": "accessToken", "value": "", "type": "string" },
+    { "key": "leadId", "value": "", "type": "string" },
+    { "key": "customerId", "value": "", "type": "string" },
+    { "key": "taskId", "value": "", "type": "string" },
+    { "key": "userId", "value": "", "type": "string" },
+    { "key": "invitedUserId", "value": "", "type": "string" },
+    { "key": "fileKey", "value": "", "type": "string" },
+    { "key": "fileUrl", "value": "", "type": "string" },
+    { "key": "adminEmail", "value": "admin@vantora.local", "type": "string" },
+    { "key": "invitedEmail", "value": "isha@vantora.local", "type": "string" }
+  ]
+}

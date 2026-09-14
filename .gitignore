@@ -1,0 +1,49 @@
+# IDEs and operating-system files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+
+# Java / Maven
+backend/target/
+*.class
+*.log
+.mvn/timing.properties
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test and analysis artifacts
+coverage/
+test-results/
+playwright-report/
+.scannerwork/
+
+# Runtime data
+uploads/
+data/
+*.pid
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+~$*
