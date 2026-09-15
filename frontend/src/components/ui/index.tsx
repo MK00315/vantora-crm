@@ -9,7 +9,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLBut
       type={type}
       className={cn(
         'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 dark:focus-visible:ring-offset-ink-950',
-        variant === 'primary' && 'bg-gradient-to-r from-brand-600 to-sky-700 text-white shadow-sm hover:from-brand-700 hover:to-sky-800 hover:shadow-md',
+        variant === 'primary' && 'dimensional-button bg-brand-600 text-white hover:bg-brand-700',
         variant === 'secondary' && 'border border-ink-200 bg-white text-ink-700 shadow-sm hover:border-ink-300 hover:bg-ink-50 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100 dark:hover:bg-ink-800',
         variant === 'ghost' && 'text-ink-600 hover:bg-ink-100 hover:text-ink-950 dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-white',
         variant === 'danger' && 'bg-rose-600 text-white hover:bg-rose-700',
@@ -60,7 +60,7 @@ export function Field({ label, error, hint, children, className }: PropsWithChil
 }
 
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('rounded-xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900', className)} {...props} />;
+  return <div className={cn('surface-card rounded-xl border border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-900', className)} {...props} />;
 }
 
 export function Badge({ className, tone = 'neutral', ...props }: HTMLAttributes<HTMLSpanElement> & { tone?: 'neutral' | 'brand' | 'success' | 'warning' | 'danger' | 'info' }) {
