@@ -185,7 +185,7 @@ export function FilesPage() {
 
       <div className="grid gap-4 lg:grid-cols-[1.4fr_.6fr]">
         <Card
-          className={cn('relative overflow-hidden border-2 border-dashed p-6 transition sm:p-8', dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40' : 'enterprise-gradient border-ink-200 dark:border-ink-700 dark:bg-ink-900 dark:bg-none')}
+          className={cn('relative overflow-hidden border-2 border-dashed p-6 transition sm:p-8', dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/40' : 'workspace-surface border-ink-200 dark:border-ink-700 dark:bg-ink-900 dark:bg-none')}
           onDragEnter={(event) => { event.preventDefault(); setDragging(true); }}
           onDragOver={(event) => event.preventDefault()}
           onDragLeave={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setDragging(false); }}
@@ -194,10 +194,10 @@ export function FilesPage() {
         >
           <input ref={inputRef} type="file" accept={ACCEPT} className="sr-only" onChange={(event) => { chooseFile(event.target.files?.[0]); event.target.value = ''; }} />
           <div className="flex flex-col items-center text-center sm:flex-row sm:text-left">
-            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-600 to-sky-600 text-white shadow-sm">{upload.isPending ? <LoaderCircle className="h-7 w-7 animate-spin" /> : <UploadCloud className="h-7 w-7" />}</div>
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-brand-600 text-white shadow-sm">{upload.isPending ? <LoaderCircle className="h-7 w-7 animate-spin" /> : <UploadCloud className="h-7 w-7" />}</div>
             <div className="mt-4 sm:ml-5 sm:mt-0"><h2 className="font-display text-lg font-bold text-ink-950 dark:text-white">{upload.isPending ? 'Uploading securely…' : dragging ? 'Drop your file here' : 'Drop a file or browse your computer'}</h2><p className="mt-1 text-sm leading-6 text-ink-500 dark:text-ink-400">JPG, PNG, WebP, PDF, or CSV · maximum 10 MB</p>{!upload.isPending && <button type="button" onClick={() => inputRef.current?.click()} className="mt-3 text-sm font-bold text-brand-700 hover:text-brand-800 dark:text-brand-400">Choose a file</button>}</div>
           </div>
-          {upload.isPending && <div className="mt-6"><div className="flex justify-between text-xs font-semibold text-ink-500"><span>Encrypted transfer in progress</span><span>{uploadProgress}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800"><div className="h-full rounded-full bg-gradient-to-r from-brand-600 to-sky-500 transition-[width] duration-300" style={{ width: `${uploadProgress}%` }} /></div></div>}
+          {upload.isPending && <div className="mt-6"><div className="flex justify-between text-xs font-semibold text-ink-500"><span>Encrypted transfer in progress</span><span>{uploadProgress}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-ink-100 dark:bg-ink-800"><div className="h-full rounded-full bg-brand-600 transition-[width] duration-300" style={{ width: `${uploadProgress}%` }} /></div></div>}
         </Card>
 
         <Card className="flex flex-col justify-between overflow-hidden p-6">
