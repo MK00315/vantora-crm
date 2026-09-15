@@ -8,7 +8,8 @@ import { CustomersPage } from '@/pages/CustomersPage';
 import { TasksPage } from '@/pages/TasksPage';
 import { TeamPage } from '@/pages/TeamPage';
 import { FilesPage } from '@/pages/FilesPage';
-import { HelpPage, NotFoundPage, ProfilePage, SettingsPage } from '@/pages/AccountPages';
+import { HelpPage, NotFoundPage, ProfilePage } from '@/pages/AccountPages';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { ForgotPasswordPage, LoginPage, RegisterPage, ResendVerificationPage, ResetPasswordPage, VerifyEmailPage } from '@/pages/auth/AuthPages';
 
 const DashboardPage = lazy(() => import('@/pages/DashboardPage').then((module) => ({ default: module.DashboardPage })));
